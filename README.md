@@ -2,6 +2,10 @@
 
 A Model Context Protocol (MCP) server that provides positive reinforcement for LLMs by awarding "cookies" as treats.
 
+<a href="https://glama.ai/mcp/servers/@bnookala/mcp-cookiejar">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@bnookala/mcp-cookiejar/badge" alt="Cookie Server MCP server" />
+</a>
+
 ## Installation & Setup
 
 1. **Build the server:**
