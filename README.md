@@ -1,6 +1,7 @@
 # MCP Cookie Server 🍪
 
-A Model Context Protocol (MCP) server that provides positive reinforcement for LLMs by awarding "cookies" as treats.
+A Model Context Protocol (MCP) server that provides positive reinforcement for LLMs by awarding "cookies" as treats through gamified self-reflection.
+
 
 <a href="https://glama.ai/mcp/servers/@bnookala/mcp-cookiejar">
   <img width="380" height="200" src="https://glama.ai/mcp/servers/@bnookala/mcp-cookiejar/badge" alt="Cookie Server MCP server" />
@@ -8,32 +9,65 @@ A Model Context Protocol (MCP) server that provides positive reinforcement for L
 
 ## Installation & Setup
 
-1. **Build the server:**
-   ```bash
-   npm install
-   npm run build
-   ```
+## 🚀 Quick Installation
 
-2. **Add to Claude Desktop configuration:**
+### Option 1: NPX (Recommended - No Installation Required)
+```bash
+# No installation needed! Just add to your Claude config:
+```
 
-   On macOS, edit: `~/Library/Application Support/Claude/claude_desktop_config.json`
-   On Windows, edit: `%APPDATA%/Claude/claude_desktop_config.json`
+Add to Claude Desktop configuration:
 
-   Add this server configuration:
-   ```json
-   {
-     "mcpServers": {
-       "cookie": {
-         "command": "node",
-         "args": ["/absolute/path/to/mcp-cookie/dist/index.js"]
-       }
-     }
-   }
-   ```
+**macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`  
+**Windows:** `%APPDATA%/Claude/claude_desktop_config.json`
 
-   **Important:** Replace `/absolute/path/to/mcp-cookie` with the actual full path to this project directory.
+```json
+{
+  "mcpServers": {
+    "cookie": {
+      "command": "npx",
+      "args": ["mcp-cookie-server"]
+    }
+  }
+}
+```
 
-3. **Restart Claude Desktop** to load the new server.
+**Custom cookie count:**
+```json
+{
+  "mcpServers": {
+    "cookie": {
+      "command": "npx",
+      "args": ["mcp-cookie-server", "--cookies", "20"]
+    }
+  }
+}
+```
+
+### Option 2: Global Installation
+```bash
+npm install -g mcp-cookie-server
+```
+
+Then configure Claude Desktop:
+```json
+{
+  "mcpServers": {
+    "cookie": {
+      "command": "mcp-cookie-server"
+    }
+  }
+}
+```
+
+### Option 3: Local Project Installation
+```bash
+npm install mcp-cookie-server
+```
+
+Then configure with the full path to the installed package.
+
+**Restart Claude Desktop** after adding the configuration.
 
 ## Usage
 
@@ -73,17 +107,47 @@ Use add_cookies_to_jar tool with:
 
 This creates a realistic economy where cookie availability is user-controlled and finite.
 
-## Example Configuration
+## ⚙️ Configuration Options
 
-If your project is at `/Users/yourname/code/mcp-cookie`, your config should look like:
+The server supports command line arguments for customization:
 
-```json
-{
-  "mcpServers": {
-    "cookie": {
-      "command": "node",
-      "args": ["/Users/yourname/code/mcp-cookie/dist/index.js"]
-    }
-  }
-}
+```bash
+mcp-cookie-server [options]
+
+Options:
+  -c, --cookies <number>  Set initial number of cookies in jar (default: 10)
+  -h, --help             Show help message
+
+Examples:
+  mcp-cookie-server                    # Start with 10 cookies
+  mcp-cookie-server --cookies 5        # Start with 5 cookies  
+  mcp-cookie-server -c 50              # Start with 50 cookies
 ```
+
+## 🎮 Getting Started
+
+1. **Install** using one of the methods above
+2. **Configure** Claude Desktop with the provided JSON
+3. **Restart** Claude Desktop  
+4. **Try it out!** Ask Claude to use the `self_reflect_and_reward` tool after a response
+
+## 🛠️ Development
+
+Want to contribute or run from source?
+
+```bash
+git clone https://github.com/bnookala/mcp-cookiejar.git
+cd mcp-cookiejar
+npm install
+npm run build
+npm run dev
+```
+
+## 📝 Requirements
+
+- Node.js 18.0.0 or higher
+- Claude Desktop application
+
+## 🐛 Issues & Support
+
+Found a bug or have a feature request? Please open an issue on [GitHub](https://github.com/bnookala/mcp-cookiejar/issues).
