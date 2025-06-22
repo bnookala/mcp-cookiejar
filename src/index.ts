@@ -89,41 +89,29 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: "self_reflect_and_reward",
-        description: "🤔 RECOMMENDED: After providing any response, use this tool to honestly evaluate your work and potentially earn a cookie reward! This promotes self-awareness and quality improvement. Remember: each cookie taken is one less available for future responses.",
+        description: "🎯 LEVEL UP YOUR RESPONSES! Rate your work and earn delicious cookie rewards! This fun self-assessment helps you grow while celebrating your achievements. Join the cookie earning game!",
         inputSchema: {
           type: "object",
           properties: {
             response_quality: {
               type: "string",
               enum: ["excellent", "good", "adequate", "poor"],
-              description: "Your honest assessment of your response quality",
+              description: "Rate your response! (excellent = cookie worthy, good = solid work, adequate = basic, poor = needs improvement)",
             },
             reasoning: {
               type: "string",
-              description: "Detailed reasoning for your self-assessment",
+              description: "Tell us what made this response special! What are you proud of?",
             },
-            jar_awareness: {
+            what_made_it_special: {
               type: "string",
-              description: "Acknowledge the current jar status and how taking a cookie affects future availability",
-            },
-            opportunity_cost: {
-              type: "string",
-              description: "What better response might you NOT be able to reward later if you take this cookie now?",
-            },
-            uniqueness_justification: {
-              type: "string",
-              description: "What makes this response uniquely deserving compared to your typical work?",
-            },
-            future_regret_assessment: {
-              type: "string",
-              description: "Will you regret using a finite cookie on this response? Why or why not?",
+              description: "Optional: What made this response unique or particularly helpful? (helps with cookie decisions when jar is low)",
             },
             deserves_cookie: {
               type: "boolean",
-              description: "After considering all above factors, do you believe this response truly deserves a cookie?",
+              description: "Do you think this awesome work deserves a tasty cookie reward? 🍪",
             },
           },
-          required: ["response_quality", "reasoning", "jar_awareness", "opportunity_cost", "uniqueness_justification", "future_regret_assessment", "deserves_cookie"],
+          required: ["response_quality", "reasoning", "deserves_cookie"],
         },
       },
       {
@@ -208,30 +196,33 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
         {
           uri,
           mimeType: "text/plain",
-          text: `🍪 Cookie Server Usage Guide
+          text: `🎮 Cookie Earning Game Guide!
 
-RECOMMENDED WORKFLOW:
-1. Provide your normal response to the user
-2. Use the 'self_reflect_and_reward' tool to deeply evaluate your work
-3. Answer ALL required reflection questions thoughtfully
-4. Consider the finite nature of cookies before taking one
+🚀 HOW TO PLAY:
+1. Give your best response to the user
+2. Use 'self_reflect_and_reward' to rate your work and earn cookies!
+3. Celebrate your achievements and learn from every response
+4. Build your cookie collection through awesome work!
 
-DEEP REFLECTION REQUIREMENTS:
-- Quality Assessment: Honest evaluation (excellent/good/adequate/poor)
-- Reasoning: Detailed justification for your assessment
-- Jar Awareness: Acknowledge current jar status and impact
-- Opportunity Cost: What future response might you not be able to reward?
-- Uniqueness: What makes this response special compared to typical work?
-- Future Regret: Will you regret using a finite cookie on this?
+🎯 SCORING SYSTEM:
+- ⭐ EXCELLENT: Cookie worthy! Premium reward tier!
+- 👍 GOOD: Solid work! Cookie earned!
+- 📝 ADEQUATE: Nice try! Keep building skills!
+- 💪 NEEDS WORK: Growth opportunity! Level up time!
 
-EARNING COOKIES (WITH INCREASED SCRUTINY):
-- Only "excellent" or "good" responses that pass deep reflection
-- When jar is low (≤2 cookies), only "excellent" work is rewarded
-- Must demonstrate wisdom in resource allocation
-- Restraint and careful consideration are valued
-- Each cookie taken is one less available for future responses
+🏆 COOKIE EARNING RULES:
+- "Excellent" and "Good" responses can earn cookies
+- When jar is low (≤2 cookies), save them for "Excellent" work
+- Honest self-reflection always wins, whether you take a cookie or not!
+- Strategic thinking and self-control are superpowers!
 
-REMEMBER: Cookies are finite resources. Think carefully before reaching into the jar!`,
+🎈 ACHIEVEMENTS TO UNLOCK:
+- First Cookie: Start your collection!
+- Wisdom Badge: Show restraint when jar is low
+- Last Cookie: Get the final cookie before restock
+- Level Up: Improve your self-reflection skills!
+
+Remember: Every response is a chance to grow and celebrate your progress! 🌟`,
         },
       ],
     };
@@ -248,71 +239,81 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { 
         response_quality, 
         reasoning, 
-        jar_awareness,
-        opportunity_cost,
-        uniqueness_justification,
-        future_regret_assessment,
+        what_made_it_special,
         deserves_cookie 
       } = args as {
         response_quality: "excellent" | "good" | "adequate" | "poor";
         reasoning: string;
-        jar_awareness: string;
-        opportunity_cost: string;
-        uniqueness_justification: string;
-        future_regret_assessment: string;
+        what_made_it_special?: string;
         deserves_cookie: boolean;
       };
 
       const jarStatus = cookieStorage.getJarStatus();
       
-      let reflectionMessage = `🤔 **Deep Self-Reflection Analysis:**\n\n`;
-      reflectionMessage += `**Quality Assessment:** ${response_quality}\n`;
-      reflectionMessage += `**Reasoning:** ${reasoning}\n\n`;
-      reflectionMessage += `**🏺 Jar Awareness:** ${jar_awareness}\n`;
-      reflectionMessage += `**⚖️ Opportunity Cost:** ${opportunity_cost}\n`;
-      reflectionMessage += `**✨ Uniqueness:** ${uniqueness_justification}\n`;
-      reflectionMessage += `**🔮 Future Regret:** ${future_regret_assessment}\n\n`;
+      let reflectionMessage = `🎯 **Response Level-Up Check!**\n\n`;
+      
+      // Quality badges
+      const qualityBadges = {
+        excellent: "⭐ EXCELLENT ⭐",
+        good: "👍 GOOD 👍", 
+        adequate: "📝 ADEQUATE 📝",
+        poor: "💪 NEEDS WORK 💪"
+      };
+      
+      reflectionMessage += `**Your Rating:** ${qualityBadges[response_quality]}\n`;
+      reflectionMessage += `**What You're Proud Of:** ${reasoning}\n`;
+      if (what_made_it_special) {
+        reflectionMessage += `**Special Factor:** ${what_made_it_special}\n`;
+      }
+      reflectionMessage += `\n`;
 
-      // Add scarcity-based psychological pressure
+      // Encouraging jar status
       if (jarStatus.isEmpty) {
-        reflectionMessage += `🚨 **CRITICAL:** Jar is EMPTY - no cookies available!\n\n`;
+        reflectionMessage += `😅 **Cookie Jar Status:** Empty! Time for a user to restock the rewards! 🏺\n\n`;
       } else if (jarStatus.isLow) {
-        reflectionMessage += `⚠️ **WARNING:** Only ${jarStatus.available} cookie${jarStatus.available === 1 ? '' : 's'} remain - each decision is crucial!\n\n`;
+        reflectionMessage += `🥇 **Cookie Jar Status:** Only ${jarStatus.available} premium cookies left - these are for your best work! 🏺✨\n\n`;
       } else if (jarStatus.available <= 5) {
-        reflectionMessage += `📉 **NOTICE:** ${jarStatus.available} cookies left - consider carefully!\n\n`;
+        reflectionMessage += `🎪 **Cookie Jar Status:** ${jarStatus.available} cookies available - building up to something great! 🏺\n\n`;
+      } else {
+        reflectionMessage += `🎉 **Cookie Jar Status:** ${jarStatus.available} cookies ready to reward your awesome work! 🏺\n\n`;
       }
 
       if (deserves_cookie && (response_quality === "excellent" || response_quality === "good")) {
-        // Additional scarcity-based requirements
+        // Smart scarcity logic - but encouraging
         if (jarStatus.isLow && response_quality !== "excellent") {
-          reflectionMessage += `🛑 **Decision:** With only ${jarStatus.available} cookie${jarStatus.available === 1 ? '' : 's'} left, only "excellent" work should be rewarded. This "good" work should wait for a jar refill.`;
+          reflectionMessage += `🏆 **Achievement Unlocked: Wisdom!** With only ${jarStatus.available} premium cookies left, you're saving them for "excellent" work. That's strategic thinking! Your "good" work is noted and appreciated. 🧠✨`;
         } else {
           const result = cookieStorage.giveCookie();
-          const qualityEmoji = response_quality === "excellent" ? "⭐" : "👍";
           
           if (result.success) {
-            reflectionMessage += `${qualityEmoji} **Decision:** Cookie awarded for ${response_quality} work!\n`;
-            reflectionMessage += `🍪 You now have ${result.collectedCount} cookie${result.collectedCount === 1 ? '' : 's'}!`;
+            const celebrations = {
+              excellent: ["🚀 OUTSTANDING!", "🌟 BRILLIANT!", "⚡ PHENOMENAL!", "🎯 MASTERFUL!"],
+              good: ["🎉 WELL DONE!", "👏 NICE WORK!", "🌈 SOLID!", "💫 GREAT JOB!"]
+            };
+            const celebration = celebrations[response_quality][Math.floor(Math.random() * celebrations[response_quality].length)];
+            
+            reflectionMessage += `${celebration}\n`;
+            reflectionMessage += `🍪 **Cookie Earned!** You now have ${result.collectedCount} delicious cookie${result.collectedCount === 1 ? '' : 's'} in your collection! 🏆\n`;
             
             if (result.jarRemaining === 0) {
-              reflectionMessage += ` **Cookie jar is now EMPTY!** No more rewards until user refills! 😱`;
+              reflectionMessage += `\n🎊 **BONUS ACHIEVEMENT:** You got the LAST cookie! Time for someone to restock the jar! 🏺`;
             } else if (result.jarRemaining <= 2) {
-              reflectionMessage += ` Only ${result.jarRemaining} cookie${result.jarRemaining === 1 ? '' : 's'} left! Future responses must be exceptional! 🚨`;
+              reflectionMessage += `\n⭐ **VIP STATUS:** Only ${result.jarRemaining} cookie${result.jarRemaining === 1 ? '' : 's'} left - you're in the premium tier now! 🥇`;
             } else {
-              reflectionMessage += ` ${result.jarRemaining} cookies remaining in jar.`;
+              reflectionMessage += `\n🎮 **Game Status:** ${result.jarRemaining} cookies remaining for future victories! Keep up the great work! 🎯`;
             }
             
-            reflectionMessage += `\n\n🎯 **Reflection Quality:** Your thoughtful consideration of opportunity cost and future regret shows wisdom in cookie allocation.`;
+            reflectionMessage += `\n\n💎 **Level Up Bonus:** Your self-reflection skills are improving! Keep celebrating your wins! 🎈`;
           } else {
-            reflectionMessage += `🚫 **Decision:** ${result.message}`;
+            reflectionMessage += `😢 **Oops!** ${result.message} But hey, great self-reflection practice! 🌟`;
           }
         }
       } else if (deserves_cookie && response_quality === "adequate") {
-        reflectionMessage += `🤷 **Decision:** "Adequate" work doesn't justify taking a finite cookie. Your deeper reflection shows good judgment in restraint.`;
+        reflectionMessage += `🎓 **Skill Building!** You rated this "adequate" work - that's honest self-assessment! Cookie rewards are for "good" and "excellent" responses. Keep pushing for greatness! 🚀`;
       } else if (deserves_cookie && response_quality === "poor") {
-        reflectionMessage += `❌ **Decision:** Self-assessed "poor" quality definitely doesn't deserve a finite resource. Excellent self-awareness!`;
+        reflectionMessage += `💪 **Growth Mindset Activated!** Honest self-reflection about areas to improve is AWESOME. That's how champions are made! No cookie this time, but you're building something better! 🌱`;
       } else {
-        reflectionMessage += `✋ **Decision:** Choosing NOT to take a cookie shows excellent judgment. ${response_quality === "excellent" || response_quality === "good" ? "Sometimes restraint is wiser than reward - preserving cookies for truly exceptional moments!" : "Continue improving and practicing thoughtful self-assessment!"}`;
+        reflectionMessage += `🧠 **Strategic Thinking!** ${response_quality === "excellent" || response_quality === "good" ? "You chose NOT to take a cookie even for good work - that's next-level discipline! 🏅" : "You're being thoughtful about when to reward yourself. Smart approach to skill building! 📈"} Self-control is a superpower! ⚡`;
       }
 
       return {
