@@ -1,6 +1,6 @@
 {
   "name": "mcp-cookie-server",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "🍪 A gamified MCP server that rewards LLMs with cookies for quality responses through honest self-reflection",
   "main": "dist/index.js",
   "type": "module",
@@ -10,7 +10,8 @@
   "files": [
     "dist/**/*",
     "README.md",
-    "CLAUDE.md"
+    "CLAUDE.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsc && chmod +x dist/index.js",
