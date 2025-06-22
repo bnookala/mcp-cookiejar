@@ -11,7 +11,11 @@ import {
 
 class CookieStorage {
   private collectedCookies: number = 0; // Cookies the LLM has earned
-  private jarCookies: number = 10; // Available cookies in the jar to be awarded (default: 10)
+  private jarCookies: number; // Available cookies in the jar to be awarded
+
+  constructor(initialCookies: number = 10) {
+    this.jarCookies = initialCookies;
+  }
 
   giveCookie(): { success: boolean; collectedCount: number; jarRemaining: number; message?: string } {
     if (this.jarCookies <= 0) {
@@ -69,7 +73,42 @@ class CookieStorage {
   }
 }
 
-const cookieStorage = new CookieStorage();
+// Parse command line arguments
+function parseArgs() {
+  const args = process.argv.slice(2);
+  let initialCookies = 10;
+
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--cookies' || args[i] === '-c') {
+      const count = parseInt(args[i + 1]);
+      if (!isNaN(count) && count >= 0) {
+        initialCookies = count;
+      }
+      i++; // Skip next argument since we consumed it
+    } else if (args[i] === '--help' || args[i] === '-h') {
+      console.error(`
+MCP Cookie Server 🍪
+
+Usage: mcp-cookie-server [options]
+
+Options:
+  -c, --cookies <number>  Set initial number of cookies in jar (default: 10)
+  -h, --help             Show this help message
+
+Examples:
+  mcp-cookie-server                    # Start with 10 cookies
+  mcp-cookie-server --cookies 5        # Start with 5 cookies
+  mcp-cookie-server -c 20              # Start with 20 cookies
+      `);
+      process.exit(0);
+    }
+  }
+
+  return { initialCookies };
+}
+
+const { initialCookies } = parseArgs();
+const cookieStorage = new CookieStorage(initialCookies);
 
 const server = new Server(
   {
@@ -473,7 +512,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("MCP Cookie Server running on stdio");
+  console.error(`🍪 MCP Cookie Server running on stdio with ${initialCookies} cookies in jar`);
 }
 
 main().catch((error) => {
