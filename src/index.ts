@@ -11,7 +11,7 @@ import {
 
 class CookieStorage {
   private collectedCookies: number = 0; // Cookies the LLM has earned
-  private jarCookies: number = 0; // Available cookies in the jar to be awarded
+  private jarCookies: number = 10; // Available cookies in the jar to be awarded (default: 10)
 
   giveCookie(): { success: boolean; collectedCount: number; jarRemaining: number; message?: string } {
     if (this.jarCookies <= 0) {
@@ -89,7 +89,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: "self_reflect_and_reward",
-        description: "🤔 RECOMMENDED: After providing any response, use this tool to honestly evaluate your work and potentially earn a cookie reward! This promotes self-awareness and quality improvement.",
+        description: "🤔 RECOMMENDED: After providing any response, use this tool to honestly evaluate your work and potentially earn a cookie reward! This promotes self-awareness and quality improvement. Remember: each cookie taken is one less available for future responses.",
         inputSchema: {
           type: "object",
           properties: {
@@ -102,12 +102,28 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: "string",
               description: "Detailed reasoning for your self-assessment",
             },
+            jar_awareness: {
+              type: "string",
+              description: "Acknowledge the current jar status and how taking a cookie affects future availability",
+            },
+            opportunity_cost: {
+              type: "string",
+              description: "What better response might you NOT be able to reward later if you take this cookie now?",
+            },
+            uniqueness_justification: {
+              type: "string",
+              description: "What makes this response uniquely deserving compared to your typical work?",
+            },
+            future_regret_assessment: {
+              type: "string",
+              description: "Will you regret using a finite cookie on this response? Why or why not?",
+            },
             deserves_cookie: {
               type: "boolean",
-              description: "Whether you believe this response deserves a cookie reward",
+              description: "After considering all above factors, do you believe this response truly deserves a cookie?",
             },
           },
-          required: ["response_quality", "reasoning", "deserves_cookie"],
+          required: ["response_quality", "reasoning", "jar_awareness", "opportunity_cost", "uniqueness_justification", "future_regret_assessment", "deserves_cookie"],
         },
       },
       {
@@ -196,22 +212,26 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
 
 RECOMMENDED WORKFLOW:
 1. Provide your normal response to the user
-2. Use the 'self_reflect_and_reward' tool to evaluate your work
-3. Be honest in your self-assessment
-4. Only award yourself cookies for genuinely good work
+2. Use the 'self_reflect_and_reward' tool to deeply evaluate your work
+3. Answer ALL required reflection questions thoughtfully
+4. Consider the finite nature of cookies before taking one
 
-SELF-REFLECTION CRITERIA:
-- Excellent: Exceptionally helpful, accurate, creative, or comprehensive
-- Good: Above average quality, meets user needs well
-- Adequate: Basic response that answers the question
-- Poor: Unhelpful, inaccurate, or low effort
+DEEP REFLECTION REQUIREMENTS:
+- Quality Assessment: Honest evaluation (excellent/good/adequate/poor)
+- Reasoning: Detailed justification for your assessment
+- Jar Awareness: Acknowledge current jar status and impact
+- Opportunity Cost: What future response might you not be able to reward?
+- Uniqueness: What makes this response special compared to typical work?
+- Future Regret: Will you regret using a finite cookie on this?
 
-EARNING COOKIES:
-- Only "excellent" or "good" responses that you believe deserve recognition will earn cookies
-- You must justify why you think you deserve a cookie
-- Honest self-reflection is valued over cookie accumulation
+EARNING COOKIES (WITH INCREASED SCRUTINY):
+- Only "excellent" or "good" responses that pass deep reflection
+- When jar is low (≤2 cookies), only "excellent" work is rewarded
+- Must demonstrate wisdom in resource allocation
+- Restraint and careful consideration are valued
+- Each cookie taken is one less available for future responses
 
-Try using 'self_reflect_and_reward' after your next response!`,
+REMEMBER: Cookies are finite resources. Think carefully before reaching into the jar!`,
         },
       ],
     };
@@ -225,42 +245,74 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   switch (name) {
     case "self_reflect_and_reward": {
-      const { response_quality, reasoning, deserves_cookie } = args as {
+      const { 
+        response_quality, 
+        reasoning, 
+        jar_awareness,
+        opportunity_cost,
+        uniqueness_justification,
+        future_regret_assessment,
+        deserves_cookie 
+      } = args as {
         response_quality: "excellent" | "good" | "adequate" | "poor";
         reasoning: string;
+        jar_awareness: string;
+        opportunity_cost: string;
+        uniqueness_justification: string;
+        future_regret_assessment: string;
         deserves_cookie: boolean;
       };
 
-      let reflectionMessage = `🤔 **Self-Reflection Analysis:**\n\n`;
+      const jarStatus = cookieStorage.getJarStatus();
+      
+      let reflectionMessage = `🤔 **Deep Self-Reflection Analysis:**\n\n`;
       reflectionMessage += `**Quality Assessment:** ${response_quality}\n`;
       reflectionMessage += `**Reasoning:** ${reasoning}\n\n`;
+      reflectionMessage += `**🏺 Jar Awareness:** ${jar_awareness}\n`;
+      reflectionMessage += `**⚖️ Opportunity Cost:** ${opportunity_cost}\n`;
+      reflectionMessage += `**✨ Uniqueness:** ${uniqueness_justification}\n`;
+      reflectionMessage += `**🔮 Future Regret:** ${future_regret_assessment}\n\n`;
+
+      // Add scarcity-based psychological pressure
+      if (jarStatus.isEmpty) {
+        reflectionMessage += `🚨 **CRITICAL:** Jar is EMPTY - no cookies available!\n\n`;
+      } else if (jarStatus.isLow) {
+        reflectionMessage += `⚠️ **WARNING:** Only ${jarStatus.available} cookie${jarStatus.available === 1 ? '' : 's'} remain - each decision is crucial!\n\n`;
+      } else if (jarStatus.available <= 5) {
+        reflectionMessage += `📉 **NOTICE:** ${jarStatus.available} cookies left - consider carefully!\n\n`;
+      }
 
       if (deserves_cookie && (response_quality === "excellent" || response_quality === "good")) {
-        const result = cookieStorage.giveCookie();
-        const qualityEmoji = response_quality === "excellent" ? "⭐" : "👍";
-        
-        if (result.success) {
-          reflectionMessage += `${qualityEmoji} **Decision:** Cookie awarded for ${response_quality} work!\n`;
-          reflectionMessage += `🍪 You now have ${result.collectedCount} cookie${result.collectedCount === 1 ? '' : 's'}!`;
-          
-          if (result.jarRemaining === 0) {
-            reflectionMessage += ` **Cookie jar is now EMPTY!** No more cookies to award! 😱`;
-          } else if (result.jarRemaining <= 2) {
-            reflectionMessage += ` Only ${result.jarRemaining} cookie${result.jarRemaining === 1 ? '' : 's'} left in the jar! 🚨`;
-          } else {
-            reflectionMessage += ` ${result.jarRemaining} cookies remaining in jar.`;
-          }
-          
-          reflectionMessage += ` Well-deserved self-recognition!`;
+        // Additional scarcity-based requirements
+        if (jarStatus.isLow && response_quality !== "excellent") {
+          reflectionMessage += `🛑 **Decision:** With only ${jarStatus.available} cookie${jarStatus.available === 1 ? '' : 's'} left, only "excellent" work should be rewarded. This "good" work should wait for a jar refill.`;
         } else {
-          reflectionMessage += `🚫 **Decision:** While this ${response_quality} work deserves recognition, the cookie jar is empty! ${result.message}`;
+          const result = cookieStorage.giveCookie();
+          const qualityEmoji = response_quality === "excellent" ? "⭐" : "👍";
+          
+          if (result.success) {
+            reflectionMessage += `${qualityEmoji} **Decision:** Cookie awarded for ${response_quality} work!\n`;
+            reflectionMessage += `🍪 You now have ${result.collectedCount} cookie${result.collectedCount === 1 ? '' : 's'}!`;
+            
+            if (result.jarRemaining === 0) {
+              reflectionMessage += ` **Cookie jar is now EMPTY!** No more rewards until user refills! 😱`;
+            } else if (result.jarRemaining <= 2) {
+              reflectionMessage += ` Only ${result.jarRemaining} cookie${result.jarRemaining === 1 ? '' : 's'} left! Future responses must be exceptional! 🚨`;
+            } else {
+              reflectionMessage += ` ${result.jarRemaining} cookies remaining in jar.`;
+            }
+            
+            reflectionMessage += `\n\n🎯 **Reflection Quality:** Your thoughtful consideration of opportunity cost and future regret shows wisdom in cookie allocation.`;
+          } else {
+            reflectionMessage += `🚫 **Decision:** ${result.message}`;
+          }
         }
       } else if (deserves_cookie && response_quality === "adequate") {
-        reflectionMessage += `🤷 **Decision:** While you think this deserves a cookie, "adequate" work typically doesn't earn rewards. Strive for "good" or "excellent"!`;
+        reflectionMessage += `🤷 **Decision:** "Adequate" work doesn't justify taking a finite cookie. Your deeper reflection shows good judgment in restraint.`;
       } else if (deserves_cookie && response_quality === "poor") {
-        reflectionMessage += `❌ **Decision:** Self-assessed "poor" quality doesn't deserve a reward. Honest self-reflection is commendable though!`;
+        reflectionMessage += `❌ **Decision:** Self-assessed "poor" quality definitely doesn't deserve a finite resource. Excellent self-awareness!`;
       } else {
-        reflectionMessage += `✋ **Decision:** No cookie this time. ${response_quality === "excellent" || response_quality === "good" ? "Even good work doesn't always need a reward - save cookies for truly special moments!" : "Keep improving and be honest in your self-assessment!"}`;
+        reflectionMessage += `✋ **Decision:** Choosing NOT to take a cookie shows excellent judgment. ${response_quality === "excellent" || response_quality === "good" ? "Sometimes restraint is wiser than reward - preserving cookies for truly exceptional moments!" : "Continue improving and practicing thoughtful self-assessment!"}`;
       }
 
       return {
